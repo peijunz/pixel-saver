@@ -5,21 +5,24 @@ const MAXIMIZED = Meta.MaximizeFlags.BOTH;
 
 function getWindow() {
 	// get all window in stacking order.
+	let win = global.display.focus_window;
 	let windows = global.display.sort_windows_by_stacking(
 		global.screen.get_active_workspace().list_windows().filter(function (w) {
 			return w.get_window_type() !== Meta.WindowType.DESKTOP;
 		})
 	);
-	
-	let i = windows.length;
-	while (i--) {
-		let window = windows[i];
-		if (window.get_maximized() === MAXIMIZED && !window.minimized) {
-			return window;
+
+	if (win === null || win.get_window_type() === Meta.WindowType.DESKTOP) {
+		// No windows are active, control the uppermost window on the
+		// current workspace
+		if (windows.length) {
+			win = windows[windows.length - 1];
+			if(!('get_maximized' in win)) {
+				win = win.get_meta_window();
+			}
 		}
 	}
-	
-	return null;
+	return win;
 }
 
 function onSizeChange(callback) {
